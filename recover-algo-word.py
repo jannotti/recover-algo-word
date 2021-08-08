@@ -114,7 +114,7 @@ if __name__ == "__main__":
         count = math.prod([len(c) for c in choices])
         if count == 1:          # 25 words given, no wildcarding
             if check_choices(choices) == 0:
-                print("Your passphrase didn't check out. Finding similar.")
+                print(f"Bad checksum. Finding similar mnemonics among {25*2048}.")
                 # Try replacing each word with _.
                 for i in range(24):
                     wild = words[:i] + ["_"] + words[i+1:]

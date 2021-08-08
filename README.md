@@ -40,7 +40,10 @@ globally as you see fit. Then try:
 ```
 
 There's nothing to recover there, since you've supplied a 25 word
-mnemonic. The associated address is printed along with the mnemonic.
+mnemonic, and the checksum worls. The associated address is printed
+along with the mnemonic.
+
+## You're missing a word
 
 Now, try again, specifying that you forgot to record the final word by
 using an underscore in its place.
@@ -76,13 +79,35 @@ could try to recover them in your wallet, or look them up in
 AlgoExporer(https://algoexplorer.io/) to figure out which holds your
 account.
 
+## You have one word wrong
+
+If you had tried to supply all 25 words, but one was wrong, the
+checksum would (usually) fail.  When that happens, the script performs
+25 wildcard searches, replacing each word with _ in turn.  In effect,
+it assumes that one of your words was mistyped, and tries to find all
+the possible mnemonics that would work with the rest, in the given
+order.
+
+Let's try our first example with `dolphin` as the fourth word.
+
+```
+./recover-algo-word.py sugar police obvious dolphin unit blur situate brown home useful manual coffee erase pipe deputy panic make radar scrap print glide abstract kind absorb matrix
+```
+
+Searching 51,200 candidates, about 30 mnemonics are found that meet the
+checksum.  Now would be a good time to use `--address`.  Sometimes
+you'll get lucky, and far fewer candidates pass the checksumming.
+
 # Obscure uses
 
-Those are the most likely cases, but you can do more.  Using an _ in
-place of a word indicates that a full 2048 word search in that
-position must be done.  If you just have sloppy handwriting and know
-the word starts with certain letter(s), xy_ will limit the search to
-bip39 words that begin with xy.
+Those are the most likely cases, but you can do more.
+
+## Underscore as a prefix wildcard
+
+Using an _ in place of a word indicates that a full 2048 word search
+in that position must be done.  If you just have sloppy handwriting
+and know the word starts with certain letter(s), xy_ will limit the
+search to bip39 words that begin with xy.
 
 For example, if you only remember that you first two words started
 with s and p:
@@ -96,6 +121,8 @@ AlgoExporer could narrow things down further.  By the way, if you also
 forgot the third word, and used o_, you'd be searching 1.8M choices
 which is much slower, but doable.  Any more and you're going to be
 waiting a while.
+
+## Comma, to try multiple choices
 
 If, on the other hand, you don't have a prefix, but somehow think you
 know that a particular spot is one of a few words, you can separate
@@ -132,5 +159,18 @@ warnings, as we assume shortened words are intentional:
 ./recover-algo-word.py suga poli obvi acce unit blur situ brow home usef manu coff eras pipe depu pani make rada scra prin glid abst kind abso matr
 ```
 
+## Tilde for fuzzy matching
 
+If you wrote your mnemonic down, but now you doubt your ability to
+read your own handwriting, maybe you can tell which words are
+especially poorly written.  In that case, end them with ~ and they
+will be expanded to a set of similar words from the bip39 list.
 
+Swap `aces~` for `access` and you'll be fine.
+
+```
+./recover-algo-word.py stupor~ police obvious aces~ unit blur situate brown home useful manual coffee erase pipe deputy panic make radar scrap print glide abstract kind absorb matrix
+```
+
+In fact, if you had tried `aces`, it would be reported as a non bip39
+word, and suggestions for replacement would have been shown.
