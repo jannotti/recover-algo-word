@@ -3,8 +3,8 @@ import argparse
 import math
 
 from algosdk.wordlist import word_list_raw
-import algosdk.mnemonic
-import algosdk.account
+import algosdk.mnemonic as mnemonic
+import algosdk.account as account
 
 known = """
 sugar police obvious access unit blur
@@ -18,20 +18,33 @@ bip39 = word_list_raw().split()
 
 
 def bip39_choices(pattern):
-    if '_' not in pattern:
+    if pattern in mnemonic.word_to_index:
         return [pattern]
+    comma = pattern.find(',')
+    if comma >= 0:
+        return bip39_choices(pattern[:comma])+bip39_choices(pattern[comma+1:])
+
     under = pattern.find('_')
+    if under == -1:
+        print(f"{pattern} is not a bip39 word.")
+        if len(pattern) > 4 and pattern[0:4] in mnemonic.word_to_index:
+            print(f"Using {pattern[0:4]}.")
+            return [pattern[0:4]]
+        return []
+    if under > 3:
+        print(f"Useless _ in '{pattern}' " +
+              "bip39 words are unique in the first four characters.")
     prefix = pattern[0:under]
     return [w for w in bip39 if w.startswith(prefix)]
 
 
 def chk25(words):
-    check = algosdk.mnemonic.word_to_index[words[-1]]
-    m_indexes = [algosdk.mnemonic.word_to_index[w] for w in words[:-1]]
-    m_bytes = algosdk.mnemonic._to_bytes(m_indexes)
+    check = mnemonic.word_to_index[words[-1]]
+    m_indexes = [mnemonic.word_to_index[w] for w in words[:-1]]
+    m_bytes = mnemonic._to_bytes(m_indexes)
     if not m_bytes[-1:] == b'\x00':
         return False
-    return check == algosdk.mnemonic._checksum(m_bytes[:32])
+    return check == mnemonic._checksum(m_bytes[:32])
 
 
 def candidates(options):
@@ -45,13 +58,14 @@ def candidates(options):
             yield [h, *candidate]
 
 
-def print_candidate(c, prefix):
-    mnemonic = " ".join(c)
-    sk = algosdk.mnemonic.to_private_key(mnemonic)
-    address = algosdk.account.address_from_private_key(sk)
+def print_candidate(candidate, prefix):
+    phrase = " ".join([mnemonic.index_to_word[mnemonic.word_to_index[c]]
+                       for c in candidate])
+    sk = mnemonic.to_private_key(phrase)
+    address = account.address_from_private_key(sk)
     prefix = prefix.upper()
     if address.startswith(prefix):
-        print(address, mnemonic)
+        print(address, phrase)
 
 
 if __name__ == "__main__":
@@ -64,7 +78,7 @@ if __name__ == "__main__":
                         help='the account being recovered (prefix), if known')
 
     args = parser.parse_args()
-    words = args.words
+    words = [w.lower() for w in args.words]
 
     tried = 0
 

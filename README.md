@@ -11,19 +11,19 @@ utility will figure it out for you.
 
 And it can do more. Suppose you wrote down 24 words, not because you
 thought the 25th word was some sort of junk, but just because you
-skipped one.  Maybe you were used to 24 word projects, so when you
-dropped one, it seemed fine.  Now, it's unclear which word is missing,
-so the exact mnemonic can't be reconstructed. But it is possible to
-figure out 25 different possibilities by assuming you dropped the word
-from each possible spot, and reconstructing what would need to be
-there to make the checksum work.  Now you can try them all until you
-find the right one.
+skipped one.  Then since you were used to 24 word projects, you didn't
+notice that you had too few words.  Now, it's unclear which word is
+missing, so the exact mnemonic can't be reconstructed. But it is
+possible to figure out 25 different possibilities by assuming you
+dropped the word from each possible spot, and reconstructing what
+would need to be there to make the checksum work.  Now you can try
+them all until you find the right one.
 
 Trying 25 mnemonics is a pain in the butt!  If you recall the address
 you're recovering, or even just the start of it, you can supply it as
 `--address AF32...` If you do, then the candidate mnemonics will be
-filtered to only those that produce the given prefix, which is likely
-to winnow things down quickly.
+filtered to only those that start with the given prefix, which is
+likely to winnow things down quickly.
 
 But you don't remember the address! While not implemented yet, the
 next trick is to hit the actual blockchain to see if the address in
@@ -96,3 +96,41 @@ AlgoExporer could narrow things down further.  By the way, if you also
 forgot the third word, and used o_, you'd be searching 1.8M choices
 which is much slower, but doable.  Any more and you're going to be
 waiting a while.
+
+If, on the other hand, you don't have a prefix, but somehow think you
+know that a particular spot is one of a few words, you can separate
+them with commas, and it will try each, along with whatever other
+wildcarding you're doing.
+
+```
+./recover-algo-word.py s_ police,favorite obvious access unit blur situate brown home useful manual coffee erase pipe deputy panic make radar scrap print glide abstract kind absorb matrix
+```
+
+will try 500 combos - 250 from the `s_` doubled by trying `police` and
+`favorite` as the second word.
+
+
+The comma doesn't seem very useful on its own - why would you know
+the word is one from a small list?  The intent is to notice when a
+word that _isn't_ a bip39 word at all is supplied, and the utility
+would internally pick several similar words as options.  Currently
+though, if a non bip39 word is supplied, nothing can be done. Unless
+the first four characters match a bip39 word. Then, since bip39 is
+unique in the first four characters, we print a warning but assume the
+typo is after character 4 and use the indicated bip39 word.
+
+
+```
+./recover-algo-word.py sugary police obvious access unit blur situate brown home useful manual coffee erase pipe deputy panic make radar scrap print glide abstract kind absorb matrix
+```
+
+works fine, substituting `sugar` for `sugary`.  Because of this, you
+can stop typing all of your words at the fourth character. You'll get no
+warnings, as we assume shortened words are intentional:
+
+```
+./recover-algo-word.py suga poli obvi acce unit blur situ brow home usef manu coff eras pipe depu pani make rada scra prin glid abst kind abso matr
+```
+
+
+
