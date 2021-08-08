@@ -40,15 +40,13 @@ globally as you see fit. Then try:
 ```
 
 There's nothing to recover there, since you've supplied a 25 word
-mnemonic. The associated address are printed along with the mnemonic.
+mnemonic. The associated address is printed along with the mnemonic.
 
 Now, try again, specifying that you forgot to record the final word by
 using an underscore in its place.
 
 ```
-./recover-algo-word.py sugar police obvious access unit blur situate
-brown home useful manual coffee erase pipe deputy panic make radar
-scrap print glide abstract kind absorb _
+./recover-algo-word.py sugar police obvious access unit blur situate brown home useful manual coffee erase pipe deputy panic make radar scrap print glide abstract kind absorb _
 ```
 
 This time 2048 options are considered - one for each possible bip39
@@ -64,11 +62,12 @@ spot we forgot.
 ./recover-algo-word.py sugar police obvious access blur situate brown home useful manual coffee erase pipe deputy panic make radar scrap print glide abstract kind absorb matrix
 ```
 
-Now, 51,200 possibilities must be considered (2048 possibilitues in
-each of 25 locations).  That still doesn't take long, but the real
-problem is that 20 valid mnemonics are generated. Usually, I'd expect
-closer to 25 in this situation, but there are some constraints that
-make it impossible to find a mnemonic for each possible missing
+Since you only gave 24 words and no indication of where the 25th
+should go, 51,200 possibilities must be considered (2048 possibilitues
+in each of 25 locations).  That still doesn't take long, but an
+annoyance is that 20 valid mnemonics are found. Usually, I'd
+expect closer to 25 in this situation, but there are some constraints
+that make it impossible to find a mnemonic for each possible missing
 spot. The address for each mnemonic is printed, and perhaps that will
 jog your memory.  If you had recalled your mnemonic started with G,
 you might have given `--address G` as an extra command line argument,
@@ -82,7 +81,7 @@ account.
 Those are the most likely cases, but you can do more.  Using an _ in
 place of a word indicates that a full 2048 word search in that
 position must be done.  If you just have sloppy handwriting and know
-the word starts with a certain letter(s), xy_ will limit the search to
+the word starts with certain letter(s), xy_ will limit the search to
 bip39 words that begin with xy.
 
 For example, if you only remember that you first two words started
@@ -97,4 +96,3 @@ AlgoExporer could narrow things down further.  By the way, if you also
 forgot the third word, and used o_, you'd be searching 1.8M choices
 which is much slower, but doable.  Any more and you're going to be
 waiting a while.
-
