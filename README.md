@@ -1,0 +1,100 @@
+# Purpose
+
+This is a utility to help out when you've misplaced _a little bit_ of
+your Algorand account mnemonic.
+
+Algorand uses a 25 word, BIP39 account mnemonic.  This confuses some
+users, since they may be used to 24 word mnemonics used by other
+projects.  Never fear! The 25th word is a checksum word, it's derived
+entirely from the first 24 words. If you fail to record it, this
+utility will figure it out for you.
+
+And it can do more. Suppose you wrote down 24 words, not because you
+thought the 25th word was some sort of junk, but just because you
+skipped one.  Maybe you were used to 24 word projects, so when you
+dropped one, it seemed fine.  Now, it's unclear which word is missing,
+so the exact mnemonic can't be reconstructed. But it is possible to
+figure out 25 different possibilities by assuming you dropped the word
+from each possible spot, and reconstructing what would need to be
+there to make the checksum work.  Now you can try them all until you
+find the right one.
+
+Trying 25 mnemonics is a pain in the butt!  If you recall the address
+you're recovering, or even just the start of it, you can supply it as
+`--address AF32...` If you do, then the candidate mnemonics will be
+filtered to only those that produce the given prefix, which is likely
+to winnow things down quickly.
+
+But you don't remember the address! While not implemented yet, the
+next trick is to hit the actual blockchain to see if the address in
+question has any Algos.  After all, you probbaly wouldn't be so
+interested in recovery if you had nothing in the account.
+
+# Usage
+
+py-algorand-sdk is the only needed module.  Use a venv, or install it
+globally as you see fit. Then try:
+
+```
+./recover-algo-word.py sugar police obvious access unit blur situate brown home useful manual coffee erase pipe deputy panic make radar scrap print glide abstract kind absorb matrix
+```
+
+There's nothing to recover there, since you've supplied a 25 word
+mnemonic. The associated address are printed along with the mnemonic.
+
+Now, try again, specifying that you forgot to record the final word by
+using an underscore in its place.
+
+```
+./recover-algo-word.py sugar police obvious access unit blur situate
+brown home useful manual coffee erase pipe deputy panic make radar
+scrap print glide abstract kind absorb _
+```
+
+This time 2048 options are considered - one for each possible bip39
+word. Only one is the proper checksum, so the same final output is
+obtained after a tiny delay.
+
+Suppose you didn't know which word you skipped when you recorded you
+mnemonic.  Let's try without "unit" from the original. But we don't
+replace unit with _ because we are pretending we didn't know which
+spot we forgot.
+
+```
+./recover-algo-word.py sugar police obvious access blur situate brown home useful manual coffee erase pipe deputy panic make radar scrap print glide abstract kind absorb matrix
+```
+
+Now, 51,200 possibilities must be considered (2048 possibilitues in
+each of 25 locations).  That still doesn't take long, but the real
+problem is that 20 valid mnemonics are generated. Usually, I'd expect
+closer to 25 in this situation, but there are some constraints that
+make it impossible to find a mnemonic for each possible missing
+spot. The address for each mnemonic is printed, and perhaps that will
+jog your memory.  If you had recalled your mnemonic started with G,
+you might have given `--address G` as an extra command line argument,
+which would have narrowed the field to just two possibilities. You
+could try to recover them in your wallet, or look them up in
+AlgoExporer(https://algoexplorer.io/) to figure out which holds your
+account.
+
+# Obscure uses
+
+Those are the most likely cases, but you can do more.  Using an _ in
+place of a word indicates that a full 2048 word search in that
+position must be done.  If you just have sloppy handwriting and know
+the word starts with a certain letter(s), xy_ will limit the search to
+bip39 words that begin with xy.
+
+For example, if you only remember that you first two words started
+with s and p:
+
+```
+./recover-algo-word.py s_ p_ obvious access unit blur situate brown home useful manual coffee erase pipe deputy panic make radar scrap print glide abstract kind absorb matrix
+```
+
+checks 33000 mnemonics and finds 16 possibilities. `--address` or
+AlgoExporer could narrow things down further.  By the way, if you also
+forgot the third word, and used o_, you'd be searching 1.8M choices
+which is much slower, but doable.  Any more and you're going to be
+waiting a while.
+
