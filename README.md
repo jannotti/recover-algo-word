@@ -173,3 +173,14 @@ Swap `aces~` for `access` and you'll be fine.
 
 In fact, if you had tried `aces`, it would be reported as a non bip39
 word, and suggestions for replacement would have been shown.
+
+## Debug your searches
+
+If you supply only one word, it will be expanded according to the
+rules above and printed.
+
+```
+./recover-algo-word.py bl_
+./recover-algo-word.py aces~,ble_
+./recover-algo-word.py wrong
+```

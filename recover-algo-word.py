@@ -135,8 +135,12 @@ if __name__ == "__main__":
                 check_choices([bip39_choices(w) for w in wild])
 
     if len(words) < 24:
-        print("I can't work miracles. " +
-              "Finding two words is only possible, if _ indicates their positions.")
+        if len(words) == 1:
+            # Useful for debugging a pattern
+            print(str(bip39_choices(words[0])))
+        else:
+            print("I can't work miracles. " +
+                  "Finding two words is only possible, if _ indicates their positions.")
 
     if len(found) > 1 and not args.address:
         print("Multiple possibilities. Narrow possibilities with --address")
