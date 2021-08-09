@@ -43,10 +43,11 @@ def bip39_choices(pattern):
         print(f"{pattern} is not a bip39 word.")
 
     if len(pattern) > 4 and pattern[0:4] in mnemonic.word_to_index:
+        word = mnemonic.index_to_word[mnemonic.word_to_index[pattern[0:4]]]
         if pattern not in reported:
-            print(f"Using {pattern[0:4]}.")
+            print(f"Using {word}.")
         reported[pattern] = 1
-        return [pattern[0:4]]
+        return [word]
     reported[pattern] = 1
     matches = difflib.get_close_matches(pattern, bip39, 6, .6)
     if matches:
