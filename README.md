@@ -14,8 +14,8 @@ thought the 25th word was some sort of junk, but just because you
 skipped one.  Then since you were used to 24 word projects, you didn't
 notice that you had too few words.  Now, it's unclear which word is
 missing, so the exact mnemonic can't be reconstructed. But it is
-possible to figure out 25 different possibilities by assuming you
-dropped the word from each possible spot, and reconstructing what
+possible to figure out about 25 different possibilities by assuming
+you dropped the word from each possible spot, and reconstructing what
 would need to be there to make the checksum work.  Now you can try
 them all until you find the right one.
 
@@ -27,20 +27,20 @@ likely to winnow things down quickly.
 
 But you don't remember the address! While not implemented yet, the
 next trick is to hit the actual blockchain to see if the address in
-question has any Algos.  After all, you probbaly wouldn't be so
+question has any Algos.  After all, you probably wouldn't be so
 interested in recovery if you had nothing in the account.
 
 # Usage
 
-py-algorand-sdk is the only needed module.  Use a venv, or install it
-globally as you see fit. Then try:
+py-algorand-sdk is the only module you need install.  Use a
+virtualenv, or install it globally as you see fit. Then try:
 
 ```
 ./recover-algo-word.py sugar police obvious access unit blur situate brown home useful manual coffee erase pipe deputy panic make radar scrap print glide abstract kind absorb matrix
 ```
 
 There's nothing to recover there, since you've supplied a 25 word
-mnemonic, and the checksum worls. The associated address is printed
+mnemonic, and the checksum works. The associated address is printed
 along with the mnemonic.
 
 ## You're missing a word
@@ -57,8 +57,8 @@ word. Only one is the proper checksum, so the same final output is
 obtained after a tiny delay.
 
 Suppose you didn't know which word you skipped when you recorded you
-mnemonic.  Let's try without "unit" from the original. But we don't
-replace unit with _ because we are pretending we didn't know which
+mnemonic.  Let's try without `unit` from the original. But we don't
+replace `unit` with `_` because we are pretending we didn't know which
 spot we forgot.
 
 ```
@@ -68,15 +68,15 @@ spot we forgot.
 Since you only gave 24 words and no indication of where the 25th
 should go, 51,200 possibilities must be considered (2048 possibilitues
 in each of 25 locations).  That still doesn't take long, but an
-annoyance is that 20 valid mnemonics are found. Usually, I'd
-expect closer to 25 in this situation, but there are some constraints
-that make it impossible to find a mnemonic for each possible missing
+annoyance is that 20 valid mnemonics are found. Usually, I'd expect
+closer to 25 in this situation, but there are some constraints that
+make it impossible to find a mnemonic for each possible missing
 spot. The address for each mnemonic is printed, and perhaps that will
 jog your memory.  If you had recalled your mnemonic started with G,
 you might have given `--address G` as an extra command line argument,
 which would have narrowed the field to just two possibilities. You
 could try to recover them in your wallet, or look them up in
-AlgoExporer(https://algoexplorer.io/) to figure out which holds your
+[AlgoExporer](https://algoexplorer.io/) to figure out which holds your
 account.
 
 ## You have one word wrong
@@ -96,7 +96,7 @@ Let's try our first example with `dolphin` as the fourth word.
 
 Searching 51,200 candidates, about 30 mnemonics are found that meet the
 checksum.  Now would be a good time to use `--address`.  Sometimes
-you'll get lucky, and far fewer candidates pass the checksumming.
+you'll get lucky, and far fewer candidates pass the checksum.
 
 # Obscure uses
 
@@ -116,7 +116,7 @@ with s and p:
 ./recover-algo-word.py s_ p_ obvious access unit blur situate brown home useful manual coffee erase pipe deputy panic make radar scrap print glide abstract kind absorb matrix
 ```
 
-checks 33000 mnemonics and finds 16 possibilities. `--address` or
+checks 33,000 mnemonics and finds 16 possibilities. `--address` or
 AlgoExporer could narrow things down further.  By the way, if you also
 forgot the third word, and used o_, you'd be searching 1.8M choices
 which is much slower, but doable.  Any more and you're going to be
@@ -137,15 +137,14 @@ will try 500 combos - 250 from the `s_` doubled by trying `police` and
 `favorite` as the second word.
 
 
-The comma doesn't seem very useful on its own - why would you know
-the word is one from a small list?  The intent is to notice when a
-word that _isn't_ a bip39 word at all is supplied, and the utility
-would internally pick several similar words as options.  Currently
-though, if a non bip39 word is supplied, nothing can be done. Unless
-the first four characters match a bip39 word. Then, since bip39 is
-unique in the first four characters, we print a warning but assume the
-typo is after character 4 and use the indicated bip39 word.
-
+The comma doesn't seem very useful on its own - why would you know the
+word is one from a small list?  The functionality exists so that when
+a non-bip39 word is noticed, similar words can be found from the bip39
+list and searched that same way. However, since bip39 is unique in the
+first four characters, if a non-bip39 word is supplied that
+nonetheless matches the first four characters of a bip39 word, a
+warning is printed but the typo is assumed after character 4 and the
+indicated bip39 word is used.
 
 ```
 ./recover-algo-word.py sugary police obvious access unit blur situate brown home useful manual coffee erase pipe deputy panic make radar scrap print glide abstract kind absorb matrix
@@ -153,7 +152,7 @@ typo is after character 4 and use the indicated bip39 word.
 
 works fine, substituting `sugar` for `sugary`.  Because of this, you
 can stop typing all of your words at the fourth character. You'll get no
-warnings, as we assume shortened words are intentional:
+warnings, as shortened words are assumed to be intentional:
 
 ```
 ./recover-algo-word.py suga poli obvi acce unit blur situ brow home usef manu coff eras pipe depu pani make rada scra prin glid abst kind abso matr
@@ -163,7 +162,7 @@ warnings, as we assume shortened words are intentional:
 
 If you wrote your mnemonic down, but now you doubt your ability to
 read your own handwriting, maybe you can tell which words are
-especially poorly written.  In that case, end them with ~ and they
+especially poorly written.  In that case, end them with `~` and they
 will be expanded to a set of similar words from the bip39 list.
 
 Swap `aces~` for `access` and you'll be fine.
