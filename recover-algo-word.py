@@ -84,7 +84,6 @@ def print_candidate(candidate, prefix):
                        for c in candidate])
     sk = mnemonic.to_private_key(phrase)
     address = account.address_from_private_key(sk)
-    prefix = prefix.upper()
     if address.startswith(prefix):
         print(address, phrase)
         found.append([address, phrase])
@@ -95,7 +94,7 @@ def check_choices(choices):
     for c in candidates(choices):
         if chk25(c):
             found += 1
-            print_candidate(c, args.address)
+            print_candidate(c, args.address.upper())
     return found
 
 
@@ -135,13 +134,26 @@ if __name__ == "__main__":
                 wild = words[:i] + ["_"] + words[i:]
                 check_choices([bip39_choices(w) for w in wild])
 
-    if len(words) < 24:
-        if len(words) == 1:
-            # Useful for debugging a pattern
-            print(str(bip39_choices(words[0])))
-        else:
-            print("I can't work miracles. " +
-                  "Finding two words is only possible, if _ indicates their positions.")
+    if len(words) == 23:
+        # This is 600 * 4M possibilities.  Utterly hopeless without an
+        # --address to winnow them down, and will take days anyway.
+        choices = [bip39_choices(w) for w in words]
+        count = math.prod([len(c) for c in choices])
+        if count > 0:
+            for low in range(23):
+                withlow = words[:low] + ["_"] + words[low:]
+                for high in range(low+1, 24):
+                    wild = withlow[:high] + ["_"] + withlow[high:]
+                    print(" ".join(wild))
+                    check_choices([bip39_choices(w) for w in wild])
+
+    if 1 < len(words) <= 22:
+        print("No. I can't work miracles. " +
+              "Finding multiple words is only possible if _ indicates their positions.")
+
+    if len(words) == 1:
+        # Useful for debugging a pattern
+        print(str(bip39_choices(words[0])))
 
     if len(found) > 1 and not args.address:
         print("Multiple possibilities. Narrow possibilities with --address")
