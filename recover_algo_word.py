@@ -2,6 +2,7 @@
 import argparse
 import difflib
 import math
+import sys
 
 from algosdk.wordlist import word_list_raw
 import algosdk.mnemonic as mnemonic
@@ -33,7 +34,7 @@ def bip39_choices(pattern):
         if underscore > 3:
             print(f"Useless _ in '{pattern}' " +
                   "bip39 words are unique in the first four characters.")
-        prefix = pattern[0:underscore]
+        prefix = pattern[:underscore]
         return [w for w in bip39 if w.startswith(prefix)]
 
     if pattern.endswith("~"):
@@ -42,13 +43,13 @@ def bip39_choices(pattern):
     if pattern not in reported:
         print(f"{pattern} is not a bip39 word.")
 
-    if len(pattern) > 4 and pattern[0:4] in mnemonic.word_to_index:
-        word = mnemonic.index_to_word[mnemonic.word_to_index[pattern[0:4]]]
+    if len(pattern) > 4 and pattern[:4] in mnemonic.word_to_index:
+        word = mnemonic.index_to_word[mnemonic.word_to_index[pattern[:4]]]
         if pattern not in reported:
-            print(f"Using {word}.")
+            print(f"Using {word} for {pattern}.")
         reported[pattern] = 1
         return [word]
-    reported[pattern] = 1
+
     matches = difflib.get_close_matches(pattern, bip39, 6, .6)
     if matches:
         print(f"Consider '{','.join(matches)}' or equivalently '{pattern}~'.")
@@ -76,6 +77,11 @@ def candidates(options):
             yield [h, *candidate]
 
 
+def has_algos(addr):
+    import explore
+    explore.active(addr)
+
+
 found = []
 
 
@@ -85,6 +91,8 @@ def print_candidate(candidate, prefix):
     sk = mnemonic.to_private_key(phrase)
     address = account.address_from_private_key(sk)
     if address.startswith(prefix):
+        if args.explore and not has_algos(address):
+            return
         print(address, phrase)
         found.append([address, phrase])
 
@@ -98,62 +106,81 @@ def check_choices(choices):
     return found
 
 
+def count_choices(choices):
+    return math.prod([len(c) for c in choices])
+
+
+def index_pairs(top):
+    for lo in range(top-1):
+        for hi in range(lo+1, top):
+            yield (lo, hi)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Recover Algorand mnemonics when some details are missing (or wrong).')
+        description='Recover Algorand mnemonics when some is missing or wrong.')
     parser.add_argument('words', metavar='N', nargs='+',
                         help='sequence of of words in account mnemonic')
-    parser.add_argument('--address', default="",
+    parser.add_argument('--address', default='',
                         help='the account being recovered (prefix), if known')
+    parser.add_argument('--explore', action='store_true',
+                        help='use algoexplorer API to filter inactive accounts')
 
     args = parser.parse_args()
     words = [w.lower() for w in args.words]
 
+    choices = [bip39_choices(w.lower()) for w in words]
+    count = count_choices(choices)
+
     if len(words) == 25:
-        choices = [bip39_choices(w) for w in words]
-        count = math.prod([len(c) for c in choices])
         if count == 1:          # 25 words given, no wildcarding
             if check_choices(choices) == 0:
-                print(f"Bad checksum. Finding similar mnemonics among {25*2048}.")
-                # Try replacing each word with _.
-                for i in range(24):
-                    wild = words[:i] + ["_"] + words[i+1:]
-                    check_choices([bip39_choices(w) for w in wild])
+                print("Bad checksum. Finding similar mnemonics")
+                print(f" Trying swaps of all pairs. {25*24} possibilities")
+                # Maybe this should be a switch that affects all
+                # check_choices calls.  That would change all our
+                # reporting about possibility count, but it would be
+                # cool to always handle swaps.
+                for lo, hi in index_pairs(25):
+                    choices[hi], choices[lo] = choices[lo], choices[hi]
+                    check_choices(choices)
+                    choices[hi], choices[lo] = choices[lo], choices[hi]
+                if len(found) > 0:  # Add a switch to keep going?
+                    sys.exit(0)
+                print(f" Trying to replace each word. {25*2048} possibilities")
+                for i in range(25):
+                    wild = choices[:i] + [bip39] + choices[i+1:]
+                    check_choices(wild)
         elif count > 1:
             print(f"Trying {count} possibilities")
             check_choices(choices)
-        else:
-            print("Unable to find candidates to check.")
 
     if len(words) == 24:        # Missing one word. Insert _ in each slot
-        choices = [bip39_choices(w) for w in words]
-        count = math.prod([len(c) for c in choices])
         if count > 0:
             print(f"Trying {25*2048*count} possibilities")
             for i in range(25):
-                wild = words[:i] + ["_"] + words[i:]
-                check_choices([bip39_choices(w) for w in wild])
+                wild = choices[:i] + [bip39] + choices[i:]
+                check_choices(wild)
 
     if len(words) == 23:
-        # This is 600 * 4M possibilities.  Utterly hopeless without an
+        # This is at least 600 * 4M = 2.5B possibilities (more if any
+        # words have wildcards).  Utterly hopeless without an
         # --address to winnow them down, and will take days anyway.
-        choices = [bip39_choices(w) for w in words]
-        count = math.prod([len(c) for c in choices])
         if count > 0:
-            for low in range(23):
-                withlow = words[:low] + ["_"] + words[low:]
-                for high in range(low+1, 24):
-                    wild = withlow[:high] + ["_"] + withlow[high:]
-                    print(" ".join(wild))
-                    check_choices([bip39_choices(w) for w in wild])
+            print(f"Trying {24*25*2048*2048*count} possibilities")
+            for lo, hi in index_pairs(25):
+                wild = choices[:lo] + [bip39] + choices[lo:hi] + [bip39] + choices[hi:]
+                check_choices(wild)
 
     if 1 < len(words) <= 22:
         print("No. I can't work miracles. " +
-              "Finding multiple words is only possible if _ indicates their positions.")
+              "Finding >= 3 words is only possible if _ indicates their positions.")
 
     if len(words) == 1:
         # Useful for debugging a pattern
-        print(str(bip39_choices(words[0])))
+        print(str(choices[0]))
+    elif count == 0:
+        print("Unable to find candidates to check.")
 
     if len(found) > 1 and not args.address:
         print("Multiple possibilities. Narrow possibilities with --address")
