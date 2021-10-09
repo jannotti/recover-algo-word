@@ -28,7 +28,10 @@ likely to winnow things down quickly.
 But you don't remember the address! While not implemented yet, the
 next trick is to hit the actual blockchain to see if the address in
 question has any Algos.  After all, you probably wouldn't be so
-interested in recovery if you had nothing in the account.
+interested in recovery if you had nothing in the account. Another 
+small tip - to find your public address, you can look at the previous
+account you used to transfer/exchange the coins in and see your wallet's
+public address from there.
 
 # Usage
 
